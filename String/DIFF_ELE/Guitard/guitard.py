@@ -10,24 +10,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-def EqMelde(pulse, celerity, length, length_points, time_differential, time_points):
-    """This Python code simulates the transverse oscillations (vibrations) of a string, such as a guitar string or a wave on a rope, using numerical methods.
-    The simulation is based on solving a differential equation that describes how the displacement of points on the string changes over time."""
-    max = 0
+def Eqguitard(U_0, celerity, length, length_points, time_differential, time_points, position_tire):
     simulation_tensor = np.zeros((length_points,time_points))
     x_differential = length / length_points
     
     # Conditions initiales
-    for position in range(0, length_points):
-        simulation_tensor[position, 0] = 0
-        simulation_tensor[position, 1] = 0
+    for position in range(0, position_tire):
+        simulation_tensor[position, 0] = U_0 * position/position_tire
+    for position in range(length_points//4, length_points):    
+        simulation_tensor[position, 0] = U_0 * (length - position * (length/length_points) /(length- position_tire** (length/length_points)))
     
     # Condition aux limites
-    for time in range(1, time_points):
-        simulation_tensor[0, time] = np.sin(pulse * time * time_differential) / 1000 # mise en mouvement transverse
-        simulation_tensor[length_points - 1, time] = 0 # f=Fixe de l'autre côté
     
-    # Calcul au cours du temps
+    #for time in range(1, time_points):
+        #simulation_tensor[0, time] = 0 
+        #simulation_tensor[length_points - 1, time] = 0
+    
+    # Calcul au cours du temps----
     for time in range(1, time_points - 1):
         for position in range(1, length_points - 1):
             simulation_tensor[position,time + 1] = (-simulation_tensor[position, time - 1]
@@ -36,19 +35,19 @@ def EqMelde(pulse, celerity, length, length_points, time_differential, time_poin
                                                     + simulation_tensor[position + 1, time] 
                                                     - 2 * simulation_tensor[position, time]) * (celerity * time_differential / x_differential) ** 2
                                                     )
-            if max < abs(simulation_tensor[position,time + 1]) :
-                max = abs(simulation_tensor[position,time + 1])
-    return max
+            
+    return simulation_tensor
 #%% Initialisation
 
 celerity = 10 # la célérité : 10m/s
-length = 0.3
+length = 0.5
 length_points = 100
 time_differential =  10 ** (-5) 
 time_points =  10 ** 5 # Pendant 1 seconde
-pulse = 2*math.pi*(celerity*2/length) # 209.4#PI
+U_0 = 0.0003
+position_tire = length_points//4
 #%% Simulation
-simulation = EqMelde(pulse, celerity, length, length_points, time_differential, time_points) 
+simulation = Eqguitard(U_0, celerity, length, length_points, time_differential, time_points, position_tire) 
 
 
 #%% Affichage tout sur une figure:
@@ -57,8 +56,6 @@ X = np.linspace(0, 0.3, 100)
  
 
 plt.figure(4, (25, 25))
-plt.xlim(0, 0.36) # Je vais plus loin, pour que les légendes ne gènent pas !
-plt.ylim(-0.01, 0.01)
 temps=[1000 * k for k in range(31)]
 for t in temps:
     plt.plot(X, simulation[:, t], label = "tps : "+str(t // 10) + " ms.")
