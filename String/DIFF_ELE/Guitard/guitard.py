@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import math
 
 def Eqguitard(U_0, celerity, length, length_points, time_differential, time_points, position_tire):
+
     simulation_tensor = np.zeros((length_points,time_points))
     x_differential = length / length_points
     

@@ -56,7 +56,7 @@ for number in range(1, 30):
 
 #%% Affichage tout sur une figure:
 
-X = np.linspace(frequence_0, (frequence_0+frequence_diff*30), length(max))
+X = np.linspace((frequence_0), (frequence_0+frequence_diff*30), len(max))
  
 
 plt.figure(4, (25, 25))
