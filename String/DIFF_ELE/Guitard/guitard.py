@@ -40,10 +40,10 @@ def Eqguitard(U_0, celerity, length, length_points, time_differential, time_poin
     return simulation_tensor
 #%% Initialisation
 
-celerity = 10 # la célérité : 10m/s
+celerity = 2600 # la célérité : 10m/s
 length = 0.5
-length_points = 100
-time_differential =  10 ** (-5) 
+length_points = 1000
+time_differential =  10 ** (-8) 
 time_points =  10 ** 5 # Pendant 1 seconde
 U_0 = 0.0003
 position_tire = length_points//4
@@ -53,7 +53,7 @@ simulation = Eqguitard(U_0, celerity, length, length_points, time_differential, 
 
 #%% Affichage tout sur une figure:
 
-X = np.linspace(0, 0.3, 100)
+X = np.linspace(0, length, length_points)
  
 
 plt.figure(4, (25, 25))
