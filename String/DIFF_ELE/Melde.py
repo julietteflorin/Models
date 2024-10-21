@@ -8,8 +8,12 @@ Created on Fri Jan 22 14:55:43 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 def EqMelde(pulse, celerity, length, length_points, time_differential, time_points):
+    """This Python code simulates the transverse oscillations (vibrations) of a string, such as a guitar string or a wave on a rope, using numerical methods.
+    The simulation is based on solving a differential equation that describes how the displacement of points on the string changes over time."""
+    max = 0
     simulation_tensor = np.zeros((length_points,time_points))
     x_differential = length / length_points
     
@@ -32,22 +36,24 @@ def EqMelde(pulse, celerity, length, length_points, time_differential, time_poin
                                                     + simulation_tensor[position + 1, time] 
                                                     - 2 * simulation_tensor[position, time]) * (celerity * time_differential / x_differential) ** 2
                                                     )
-            
-    return simulation_tensor
+            if max < abs(simulation_tensor[position,time + 1]) :
+                max = abs(simulation_tensor[position,time + 1])
+    return max
 #%% Initialisation
-pulse = 209.4
+
 celerity = 10 # la célérité : 10m/s
 length = 0.3
 length_points = 100
 time_differential =  10 ** (-5) 
 time_points =  10 ** 5 # Pendant 1 seconde
+pulse = 2*math.pi*(celerity*2/length) # 209.4#PI
 #%% Simulation
 simulation = EqMelde(pulse, celerity, length, length_points, time_differential, time_points) 
 
 
 #%% Affichage tout sur une figure:
 
-X = np.linspace(0, 0.3, 101)
+X = np.linspace(0, 0.3, 100)
  
 
 plt.figure(4, (25, 25))

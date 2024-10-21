@@ -1,0 +1,18 @@
+## Differential elements :
+Dicritisation of the equasion 
+
+
+For the string the conditions are :
+# Boundary conditions:
+        One end of the string (at position 0) is driven by a sinusoidal pulse.
+
+        The other end (at the last position) is fixed (displacement is always zero).
+
+# Numerical Calculation:
+
+    The wave equation is discretized in space and time.
+    For each time step, the function updates the displacement of every point on the string based on the previous two time steps and the neighboring points.
+# The Mathematical equation behind the string 
+Fundamental frequency: f1=v2/L ​, where vv is the wave speed and LL is the string length.
+Harmonic frequencies: Higher harmonics are multiples of the fundamental, fn=n⋅f1fn​=n⋅f1​.
+To find the resonance frequency: You need to know the wave speed (based on the string's tension and mass per unit length) and the length of the string.
