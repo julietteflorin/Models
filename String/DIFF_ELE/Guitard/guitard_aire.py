@@ -35,7 +35,7 @@ def Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential
                                                     )
             r_position = (r**2 + (length/length_points * position)**2)**(1/2) # position relative de où a lieu le mouvement
             index =int((time- r_position/c0))
-            pression_in_time[time] += p0 * c0 / (4*math.pi) *(simulation_tensor[position, index  + 1] - simulation_tensor[position, index])/time_differential 
+            pression_in_time[time] += p0 * c0 / (4*math.pi) *(simulation_tensor[position, index  + 1] - simulation_tensor[position, index])/time_differential/r_position 
     return simulation_tensor, pression_in_time
 #%% Initialisation
 r = 1 #distance to where we are listening
@@ -43,11 +43,11 @@ p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
 celerity = 2600 # la célérité : 10m/s
 length = 0.5
-length_points = 100
-time_differential =  10 ** (-7) 
-time_points =  10 ** 7 #1 ms
+length_points = 200
+time_differential =  10 ** (-7)#-6 error 
+time_points =  10 ** 5 #1 ms
 U_0 = 0.0003
-position_tire = length_points//4
+position_tire = length_points//3
 #%% Simulation
 start_time = time.time()
 simulation, pression = Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential, time_points, position_tire) 
@@ -59,7 +59,7 @@ print(f"Simulation took {elapsed_time} seconds.")
 file_name = (
     f"simulation_r{r}_p0{p0}_c0{c0}_celerity{celerity}_"
     f"length{length}_points{length_points}_dt{time_differential}_"
-    f"timepoints{time_points}_U0{U_0}.txt"
+    f"timepoints{time_points}_U0{U_0}.wav"
 )
 sample_rate = len(pression)/(len(pression)*time_differential)
 num_samples = len(pression)
