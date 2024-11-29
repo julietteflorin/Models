@@ -35,14 +35,14 @@ def Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential
                                                     )
             r_position = (r**2 + (length/length_points * position)**2)**(1/2) # position relative de où a lieu le mouvement
             index =int((time- r_position/c0))
-            pression_in_time[time] += p0 * c0 / (4*math.pi) *(simulation_tensor[position, index  + 1] - simulation_tensor[position, index])/time_differential/r_position 
+            pression_in_time[time] += p0 * c0 / (4*math.pi) *(simulation_tensor[position, index  + 1] - simulation_tensor[position, index])/time_differential/r_position #in pascal 
     return simulation_tensor, pression_in_time
 #%% Initialisation
 r = 1 #distance to where we are listening
 p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
-celerity = 2600 # la célérité : 10m/s
-length = 0.5
+celerity = 264 # la célérité : 10m/s
+length = 0.6
 length_points = 200
 time_differential =  10 ** (-7)#-6 error 
 time_points =  10 ** 5 #1 ms
