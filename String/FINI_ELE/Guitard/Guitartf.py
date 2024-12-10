@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 L = 0.5               # Longueur de la corde (m)
 c = 2600
 
-rho_volume = 1240  #kg·m-3           
-diameter = 0.003 #m 
+rho_volume = 1150   #kg·m-3           
+diameter = 0.00055 #m 
 # The string is cicular
-rho = np.pi * diameter * diameter / 4 * rho_volume # Mass linéique kg.m
+rho = rho_volume*(np.pi * diameter * diameter )/ 4   # Mass linéique kg.m
 T = c**2*rho          # Tension de la corde (N)
 print("the tension",T)
 n_elements = 100       # Nombre d'éléments finis
