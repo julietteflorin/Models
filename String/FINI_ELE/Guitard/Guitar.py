@@ -62,8 +62,6 @@ def FEMgui(L, rho, T, c, n_elements, dx, n_nodes, position_pincement, hauteur_ma
     pression_in_time = compute_pressure(simulation, r_positions, indices, dt, p0, c0, n_steps)
     return simulation, pression_in_time
 
-
-
 position = 1
 # Initialiser la perturbation
 position_pincement = 0.25  # La corde est pincée à un quart de sa longueur
@@ -81,9 +79,8 @@ c = (T / rho) ** 0.5   # Célérité de l'onde
 print("Célérité de l'onde : c =", c)
 # Condition CFL pour le pas de temps
 t_end = 1         # Temps de simulation (s)
-time_points =  44100
-dt =  t_end/time_points #-6 error 
-n_elements = 100       # Nombre d'éléments finis
+dt = 1*10**(-5)
+n_elements = 80       # Nombre d'éléments finis
 dx = L / n_elements    # Longueur d'un élément
 n_nodes = n_elements + 1
 n_steps = int(t_end//dt)        # Nombre de pas temporels

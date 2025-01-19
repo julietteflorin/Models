@@ -45,11 +45,13 @@ tension = 60
 mu = 0.000582
 celerity = (tension/mu)**(1/2) # la célérité : 10m/s
 length = 0.65
-length_points = 100
+length_points = 80
 
 Time = 1
-time_points =  44100
-time_differential =  Time/time_points #-6 error 
+
+time_differential =  2*10**(-5) #-6 error
+time_points =  int(Time/time_differential)
+print(time_differential)
 
 U_0 = 0.0003
 position_tire = length_points//3

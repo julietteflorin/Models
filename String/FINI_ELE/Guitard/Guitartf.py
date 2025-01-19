@@ -2,11 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import wave
-import math
-from scipy.linalg import solve
-from numba import njit, prange
+import math 
 
+
+# Perturbation initiale (forme triangulaire)
+# Déplacement initial qui ressemble à une corde de guitare pincée
+# Perturbation initiale (forme triangulaire) avec contrôle de la hauteur
 def perturbation_initiale(x, L, position_pincement, hauteur_max):
+    # position_pincement : Position relative où la corde est pincée (par exemple, 0.25 pour un quart de la longueur)
+    # hauteur_max : Hauteur maximale du pincement
     perturbation = np.zeros_like(x)
     mid_point = int(position_pincement * len(x))  # Convertir en index
     for i in range(len(x)):
@@ -16,26 +20,20 @@ def perturbation_initiale(x, L, position_pincement, hauteur_max):
             perturbation[i] = hauteur_max * ((len(x) - i) / (len(x) - mid_point))
     return perturbation
 
-@njit(parallel=True)
-def compute_pressure(simulation, r_positions, indices, dt, p0, c0, n_steps):
-    pression_in_time = np.zeros(n_steps)
-    for time in prange(1, n_steps - 1):
-        for space in prange(1, len(r_positions)):
-            index = indices[time, space]
-            if 0 <= index < n_steps - 1:
-                pression_in_time[time] += p0 * c0 / (4 * math.pi * r_positions[space]) * (
-                    (simulation[index + 1, space] - simulation[index, space]) / dt
-                )
-    return pression_in_time
 
-def FEMgui(L, rho, T, c, n_elements, dx, n_nodes, position_pincement, hauteur_max, t_end, dt, n_steps):
+def FEMgui(L, rho, T,c, n_elements, dx, n_nodes, position_pincement, hauteur_max, t_end, dt, n_steps):
+    pression_in_time = np.zeros(n_steps)
     x = np.linspace(0, L, n_nodes)
-    dt_max = dx / c
+    print(n_steps)
+    dt_max = dx / c        # Condition CFL
     dt = min(dt, dt_max)
     print(f"dt utilisé : {dt}, dt_max (CFL) : {dt_max}")
 
-    K_local = (T / dx) * np.array([[1, -1], [-1, 1]])
-    M_local = (rho * dx / 6) * np.array([[2, 1], [1, 2]])
+    # Matrices locales
+    K_local = (T / dx) * np.array([[1, -1], [-1, 1]])  # Matrice de raideur locale
+    M_local = (rho * dx / 6) * np.array([[2, 1], [1, 2]])  # Matrice de masse locale
+
+    # Assemblage global des matrices K et M
     K = np.zeros((n_nodes, n_nodes))
     M = np.zeros((n_nodes, n_nodes))
     for i in range(n_elements):
@@ -43,25 +41,34 @@ def FEMgui(L, rho, T, c, n_elements, dx, n_nodes, position_pincement, hauteur_ma
         K[np.ix_(dofs, dofs)] += K_local
         M[np.ix_(dofs, dofs)] += M_local
 
-    K[0, :] = K[-1, :] = 0
-    K[0, 0] = K[-1, -1] = 1
-    M[0, :] = M[-1, :] = 0
-    M[0, 0] = M[-1, -1] = 1
+    # Conditions aux limites
+    K[0, :] = 0
+    K[-1, :] = 0
+    K[0, 0] = 1
+    K[-1, -1] = 1
+    M[0, :] = 0
+    M[-1, :] = 0
+    M[0, 0] = 1
+    M[-1, -1] = 1
 
-    simulation = np.zeros((n_steps, n_nodes))
+    # Simulation des déplacements
+    simulation = np.zeros((n_steps, n_nodes))  # Déplacements
     simulation[0, :] = perturbation_initiale(x, L, position_pincement, hauteur_max)
+
+
+    # Initialiser la vitesse initiale (optionnel)
     simulation[1, :] = simulation[0, :]
 
-    r_positions = np.sqrt(r**2 + (L / n_nodes * np.arange(1, n_elements))**2)
-    indices = (np.arange(n_steps)[:, None] - r_positions / c0 / dt).astype(int)
-
+    # Simulation temporelle avec méthode des différences centrales
     for time in range(1, n_steps - 1):
-        A = solve(M, -K @ simulation[time])
+        A = np.linalg.inv(M) @ (-K @ simulation[time])
         simulation[time + 1, :] = 2 * simulation[time, :] - simulation[time - 1, :] + (dt**2) * A
+        for space in range(1, n_elements):
+            r_position = (r**2 + (L/n_nodes * space)**2)**(1/2) # position relative de où a lieu le mouvement
+            index =int((time- r_position/c0))
+            pression_in_time[time] += p0 * c0 / (4*math.pi) *(simulation[index  + 1, space ] - simulation[index, space])/dt/r_position #in pascal 
 
-    pression_in_time = compute_pressure(simulation, r_positions, indices, dt, p0, c0, n_steps)
-    return simulation, pression_in_time
-
+    return simulation, pression_in_time 
 
 
 position = 1
@@ -74,20 +81,6 @@ r = 1 #distance to where we are listening
 p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
 # Paramètres de la corde
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-L = 0.5               # Longueur de la corde (m)
-c = 2600
-
-rho_volume = 1150   #kg·m-3           
-diameter = 0.00055 #m 
-# The string is cicular
-rho = rho_volume*(np.pi * diameter * diameter )/ 4   # Mass linéique kg.m
-T = c**2*rho          # Tension de la corde (N)
-print("the tension",T)
-=======
-=======
->>>>>>> Stashed changes
 L = 0.65               # Longueur de la corde (m)
 rho = 0.000582         # Densité linéique de masse (kg/m)
 T = 60                 # Tension de la corde (N)
@@ -95,13 +88,8 @@ c = (T / rho) ** 0.5   # Célérité de l'onde
 print("Célérité de l'onde : c =", c)
 # Condition CFL pour le pas de temps
 t_end = 1         # Temps de simulation (s)
-time_points =  44100
-dt =  t_end/time_points #-6 error 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-n_elements = 100       # Nombre d'éléments finis
+dt = 1*10**(-5)
+n_elements = 80       # Nombre d'éléments finis
 dx = L / n_elements    # Longueur d'un élément
 n_nodes = n_elements + 1
 n_steps = int(t_end//dt)        # Nombre de pas temporels
