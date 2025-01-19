@@ -74,17 +74,6 @@ r = 1 #distance to where we are listening
 p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
 # Paramètres de la corde
-<<<<<<< Updated upstream
-L = 0.5               # Longueur de la corde (m)
-c = 2600
-
-rho_volume = 1150   #kg·m-3           
-diameter = 0.00055 #m 
-# The string is cicular
-rho = rho_volume*(np.pi * diameter * diameter )/ 4   # Mass linéique kg.m
-T = c**2*rho          # Tension de la corde (N)
-print("the tension",T)
-=======
 L = 0.65               # Longueur de la corde (m)
 rho = 0.000582         # Densité linéique de masse (kg/m)
 T = 60                 # Tension de la corde (N)
@@ -94,7 +83,6 @@ print("Célérité de l'onde : c =", c)
 t_end = 1         # Temps de simulation (s)
 time_points =  44100
 dt =  t_end/time_points #-6 error 
->>>>>>> Stashed changes
 n_elements = 100       # Nombre d'éléments finis
 dx = L / n_elements    # Longueur d'un élément
 n_nodes = n_elements + 1

@@ -41,11 +41,16 @@ def Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential
 r = 1 #distance to where we are listening
 p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
-celerity = 264 # la célérité : 10m/s
-length = 0.6
-length_points = 200
-time_differential =  10 ** (-7)#-6 error 
-time_points =  10 ** 5 #1 ms
+tension = 60 
+mu = 0.000582
+celerity = (tension/mu)**(1/2) # la célérité : 10m/s
+length = 0.65
+length_points = 100
+
+Time = 1
+time_points =  44100
+time_differential =  Time/time_points #-6 error 
+
 U_0 = 0.0003
 position_tire = length_points//3
 #%% Simulation
