@@ -120,7 +120,7 @@ plt.show()
 sample_rate = int(1 / dt)
 audio_data = np.int16((pression / np.max(np.abs(pression))) * 32767)
 
-file_name = f"simulation_r{r}_p0{p0}_c0{c0}_celerity{c}.wav"
+file_name = f"dif_finisimulation_r{r}_p0{p0}_c0{c0}_celerity{c}.wav"
 with wave.open(file_name, 'w') as wf:
     wf.setnchannels(1)
     wf.setsampwidth(2)

@@ -29,8 +29,11 @@ def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu):
     delta_x = L / N
     delta_t = Tau / K
     gamma = T * delta_t**2 / delta_x**2
+    
     alpha = mu + sigma / 2 * delta_t
     theta = -mu + sigma / 2 * delta_t
+
+    
     r_position = 1
     y = np.zeros((N, K + 1))
     Fs = int(K / Tau)  # Sampling frequency
@@ -43,12 +46,13 @@ def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu):
 
     for n in range(n0 + 1, N + 1):
         y[n - 1, 0] = y0 * (N - n) / (N - n0)
-        y[n - 1, 1] = y[n - 1, 0]
-
+    for time in range(1, K):
+        y[0, time] = 0 
+        y[N - 1, time] = 0
+    for position in range(0, N):
+        y[position, 1] = y[position, 0]
     # Current values calculation
     for k in range(1, K):
-        y[0, k] = 0
-        y[N - 1, k] = 0
 
         for n in range(1, N - 1):
             y[n, k + 1] = (gamma * (y[n + 1, k] + y[n - 1, k]) +
@@ -61,14 +65,16 @@ def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu):
     
 
 # Parameters
-N = 80
-n0 = 40
+N = 100
+n0 = 25
 y0 = 0.0003
-K = 44100
+diff_t = 2*10**(-5)
 Tau = 1
+K = int(Tau//diff_t)
+
 L = 0.65
-T = 60.0
-sigma = 0.001
+T = 60
+sigma = 0.005
 mu = 0.000582
 
 #%% Simulation
@@ -80,7 +86,7 @@ print(f"Simulation took {elapsed_time} seconds.")
 
 #%% Save the data
 file_name = (
-    f"simulation_N{N}_n0{n0}_y0{y0}_Tau{Tau}_L{L}_T{T}_sigma{sigma}_mu{mu}.wav"
+    f"v5_simulation_N{N}_n0{n0}_y0{y0}_Tau{Tau}_L{L}_T{T}_sigma{sigma}_mu{mu}.wav"
 )
 file_name = file_name.replace(" ", "_")
 
@@ -101,9 +107,10 @@ with wave.open(file_name, 'w') as wf:
 X = np.linspace(0, L, N)
 
 plt.figure(figsize=(12, 8))
-times_to_plot = [1000 * k for k in range(31)]
+times_to_plot = [k for k in range(31)]
+delta_t = K//31
 for t in times_to_plot:
-    plt.plot(X, simulation[:, t], label=f"Time: {t // 10} ms")
+    plt.plot(X, simulation[:, t*delta_t], label=f"Time: {(t * delta_t)*Tau/K:.3f} s")
 plt.ylabel('Height (m)')
 plt.xlabel('Position (m)')
 plt.title('String height vs position for different times')

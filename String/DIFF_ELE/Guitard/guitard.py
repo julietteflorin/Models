@@ -21,11 +21,11 @@ def Eqguitard(U_0, celerity, length, length_points, time_differential, time_poin
     for position in range(length_points//4, length_points):    
         simulation_tensor[position, 0] = U_0 * (length - position * (length/length_points) /(length- position_tire** (length/length_points)))
     
-    # Condition aux limites
+    #Condition aux limites
     
-    #for time in range(1, time_points):
-        #simulation_tensor[0, time] = 0 
-        #simulation_tensor[length_points - 1, time] = 0
+    for time in range(1, time_points):
+        simulation_tensor[0, time] = 0 
+        simulation_tensor[length_points - 1, time] = 0
     
     # Calcul au cours du temps----
     for time in range(1, time_points - 1):
@@ -42,7 +42,7 @@ def Eqguitard(U_0, celerity, length, length_points, time_differential, time_poin
 
 celerity = 321 # la célérité : 10m/s
 length = 0.5
-length_points = 200
+length_points = 80
 time_differential =  10 ** (-7) 
 time_points =  10 ** 5 # Pendant 1 seconde
 U_0 = 0.0003

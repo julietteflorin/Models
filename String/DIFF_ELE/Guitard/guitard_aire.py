@@ -20,10 +20,15 @@ def Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential
     
     # Conditions initiales
     for position in range(0, position_tire):
-        simulation_tensor[position, 0] = U_0 * position/position_tire
+        simulation_tensor[position, 0] = U_0 * position / position_tire
     for position in range(position_tire, length_points):    
-        simulation_tensor[position, 0] = U_0 * (length - position * (length/length_points) /(length- position_tire** (length/length_points)))
-    
+        simulation_tensor[position, 0] = U_0 * (length_points - position) / (length_points - position_tire)
+    for time in range(1, time_points):
+        simulation_tensor[0, time] = 0 
+        simulation_tensor[length_points - 1, time] = 0
+    for position in range(0, length_points):
+        simulation_tensor[position, 1] = simulation_tensor[position, 0]
+
     # Calcul au cours du temps----
     for time in range(1, time_points - 1):
         for position in range(1, length_points - 1):
@@ -45,7 +50,7 @@ tension = 60
 mu = 0.000582
 celerity = (tension/mu)**(1/2) # la célérité : 10m/s
 length = 0.65
-length_points = 80
+length_points = 100
 
 Time = 1
 
@@ -54,7 +59,7 @@ time_points =  int(Time/time_differential)
 print(time_differential)
 
 U_0 = 0.0003
-position_tire = length_points//3
+position_tire = 25
 #%% Simulation
 start_time = time.time()
 simulation, pression = Eqguitard(r, p0, c0, U_0, celerity, length, length_points, time_differential, time_points, position_tire) 
@@ -64,9 +69,9 @@ print(f"Simulation took {elapsed_time} seconds.")
 
 #%% Enregistrer les données
 file_name = (
-    f"simulation_r{r}_p0{p0}_c0{c0}_celerity{celerity}_"
+    f"element_fini_sans_frottemet_guitard_r{r}_celerity{celerity}_"
     f"length{length}_points{length_points}_dt{time_differential}_"
-    f"timepoints{time_points}_U0{U_0}.wav"
+    f"timepoints{time_points}_U0{U_0}_localisation{position_tire}.wav"
 )
 sample_rate = len(pression)/(len(pression)*time_differential)
 num_samples = len(pression)
@@ -85,15 +90,17 @@ with wave.open(file_name, 'w') as wf:
 
 X = np.linspace(0, length, length_points)
 
-plt.figure(4, (25, 25))
-temps=[1000 * k for k in range(31)]
-for t in temps:
-    plt.plot(X, simulation[:, t], label = "tps : "+str(t // 10) + " ms.")
-plt.ylabel('hauteur en m') # Légendes en x et y
-plt.xlabel('x en m')
-plt.title('hauteur de la corde en fonction de x pour différents temps')
-plt.legend(loc = 7)
+plt.figure(figsize=(12, 8))
+times_to_plot = [k for k in range(31)]
+delta_t = time_points//31
+for t in times_to_plot:
+    plt.plot(X, simulation[:, t*delta_t], label=f"Time: {(t * delta_t)*Time/time_points:.3f} s")
+plt.ylabel('Height (m)')
+plt.xlabel('Position (m)')
+plt.title('String height vs position for different times')
+plt.legend(loc='best')
 plt.show()
+
 
 plt.figure(4, (25, 25))
 plt.plot(pression)
