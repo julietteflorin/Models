@@ -50,7 +50,7 @@ tension = 60
 mu = 0.000582
 celerity = (tension/mu)**(1/2) # la célérité : 10m/s
 length = 0.65
-length_points = 100
+length_points = 80
 
 Time = 1
 
@@ -79,7 +79,7 @@ amplitude = 32767
 
 pression = pression / np.max(np.abs(pression))
 audio_data = np.int16(pression * amplitude)
-
+print(sample_rate)
 with wave.open(file_name, 'w') as wf:
     wf.setnchannels(1)
     wf.setsampwidth(2)

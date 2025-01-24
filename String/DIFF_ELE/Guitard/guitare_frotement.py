@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import time
 import wave
 import math
-def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu):
+def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu, delta_x, delta_t):
     """
     Calculate the vibration of a string and return the mean level of vibration.
 
@@ -25,47 +25,40 @@ def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu):
     """
     # Initialize parameters
     p0 = 1.225 # ρ0: density of air (~1.225 kg/m^3).
-    c0 = 343 # c0: speed of sound in air (~343 m/s).
-    delta_x = L / N
-    delta_t = Tau / K
+    c0 = 343 # c0: speed of sound in air (~343 m/s)
     gamma = T * delta_t**2 / delta_x**2
-    
     alpha = mu + sigma / 2 * delta_t
     theta = -mu + sigma / 2 * delta_t
-
-    
-    r_position = 1
-    y = np.zeros((N, K + 1))
-    Fs = int(K / Tau)  # Sampling frequency
+    r = 1
+    y = np.zeros((N, K))
     pression_in_time = np.zeros(K)
     
     # Shape of the string and initial velocities
-    for n in range(1, n0 + 2):
-        y[n - 1, 0] = y0 * (n - 1) / n0
-        y[n - 1, 1] = y[n - 1, 0]
+    for n in range(0, n0):
+        y[n, 0] = y0 *n / n0
+    for n in range(n0, N):
+        y[n, 0] = y0 * (N - n) / (N - n0)
 
-    for n in range(n0 + 1, N + 1):
-        y[n - 1, 0] = y0 * (N - n) / (N - n0)
     for time in range(1, K):
         y[0, time] = 0 
         y[N - 1, time] = 0
     for position in range(0, N):
         y[position, 1] = y[position, 0]
     # Current values calculation
-    for k in range(1, K):
-
+    for k in range(1, K-1):
         for n in range(1, N - 1):
             y[n, k + 1] = (gamma * (y[n + 1, k] + y[n - 1, k]) +
                            2 * (mu - gamma) * y[n, k] +
                            theta * y[n, k - 1]) / alpha
-            
+            r_position = (r**2 + (L/N * n)**2)**(1/2) # position relative de où a lieu le mouvement
             index = int((k - r_position / c0))
-            pression_in_time[k] += p0 * c0 / (4 * math.pi) * (y[n, index + 1] - y[n, index]) / delta_t / r_position # in pascal 
+            pression_in_time[k] += p0 * c0 / (4 * math.pi) * ( y[n, index + 1] - y[n, index] ) / delta_t / r_position
+
     return y, pression_in_time
     
 
 # Parameters
-N = 100
+N = 80
 n0 = 25
 y0 = 0.0003
 diff_t = 2*10**(-5)
@@ -74,12 +67,12 @@ K = int(Tau//diff_t)
 
 L = 0.65
 T = 60
-sigma = 0.005
+sigma = 0
 mu = 0.000582
-
+delta_x = L / N
 #%% Simulation
 start_time = time.time()
-simulation, pression = calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu)
+simulation, pression = calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu, delta_x, diff_t)
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Simulation took {elapsed_time} seconds.")
@@ -90,7 +83,7 @@ file_name = (
 )
 file_name = file_name.replace(" ", "_")
 
-sample_rate = len(pression)/(len(pression)*Tau / K)
+sample_rate = 1 / diff_t
 num_samples = len(pression)
 amplitude = 32767
 
