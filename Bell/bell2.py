@@ -2,14 +2,29 @@ import numpy as np
 import scipy.io.wavfile as wavfile
 import matplotlib.pyplot as plt
 import pickle 
+import time
 
 # Barre de progression pour suivre l'avancée de la simulation
-def progress_bar(progress,totalIterations,bar_length=30):
+def progress_bar(progress,totalIterations,start_time,bar_length=30):
     fraction = progress / (totalIterations - 1)
     arrow = int(fraction * bar_length - 1) * '-' + '>'
     padding = int(bar_length - len(arrow)) * ' '
-    ending = '\n' if progress == (totalIterations - 1) else '\r'
-    print('\r'+f'Progress: [{arrow}{padding}] {int(fraction*100)}%', end=ending)
+
+    elapsed_time = time.time() - start_time
+    fraction = progress / (totalIterations - 1)
+    remaining_time = elapsed_time/fraction - elapsed_time if fraction !=0 else 0
+
+    hours, remainder = divmod(remaining_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    p = ""
+    if remaining_time != 0:
+        p += f" {int(hours)} h" if int(hours) > 0 else ""
+        p += f" {int(minutes)} m" if int(minutes) > 0 else ""
+        p += f" {int(seconds)} s" if int(seconds) > 0 else ""
+        p += " remaining"
+
+    print('\r'+f'Progress: [{arrow}{padding}] {int(fraction*100)}%{p}'+' '*10, end="")
 
 def simulation(R, u0_i):
     # Parameters
@@ -42,84 +57,101 @@ def simulation(R, u0_i):
     # Initialize elongations
     u1 = np.zeros((N, K))
     u0 = np.zeros((N, K))
-    u_ = np.zeros((N, K, Nt))
+    u_ = np.zeros((N, K, Nt), dtype=np.float32)
+    try:
+        u_ = np.zeros((N, K, Nt), dtype=np.float64)
+    except Exception as e:
+        print(e)
+        print("Using dtype=np.float32 instead")
+
     Fs = Nt / Tau  # Sampling frequency
     y_moy = np.zeros(Nt)  # Average level
 
     # Initial shape of the drum
     u0[n0, k0] = u0_i
     u_[:,:,0]= u0
+
+    # Derivatives
+    d_dtheta = np.zeros((N, K))
+    d2_dtheta2 = np.zeros((N, K))
+    d2_dphi2 = np.zeros((N, K))
+    d3_dtheta3 = np.zeros((N, K))
+    d4_dtheta4 = np.zeros((N, K))
+    d4_dphi4 = np.zeros((N, K))
+    d3_dphi_dtheta2 = np.zeros((N, K))
+    d3_dtheta_dphi2 = np.zeros((N, K))
+    d4_dtheta2_dphi2 = np.zeros((N, K))
+    nabla4 = np.zeros((N, K))
+
     # Main time loop
+    start_time = time.time()
     for t in range(1, Nt-1):
-        progress_bar(t,Nt)
+        progress_bar(t,Nt,start_time)
         u0 = u_[:,:,t]
         y_moy[t - 1] = Gain * np.mean(u0)
-        
-        # Derivatives
-        d_dtheta = np.zeros((N, K))
-        d2_dtheta2 = np.zeros((N, K))
-        d2_dphi2 = np.zeros((N, K))
-        d3_dtheta3 = np.zeros((N, K))
-        d4_dtheta4 = np.zeros((N, K))
-        d4_dphi4 = np.zeros((N, K))
-        d3_dphi_dtheta2 = np.zeros((N, K))
-        d3_dtheta_dphi2 = np.zeros((N, K))
-        d4_dtheta2_dphi2 = np.zeros((N, K))
-        nabla4 = np.zeros((N, K))
 
-        for k in range(K):
-            for n in range(1, N - 1):
-                d_dtheta[n, k] = 1 / (2 * delta_theta) * (u0[n + 1, k] - u0[n - 1, k])
-                d2_dtheta2[n, k] = 1 / delta_theta**2 * (u0[n + 1, k] - 2 * u0[n, k] + u0[n - 1, k])
+        d_dtheta[1:N-1, :] = (u0[2:N, :] - u0[0:N-2, :]) / (2 * delta_theta)
+        d2_dtheta2[1:N-1, :] = (u0[2:N, :] - 2 * u0[1:N-1, :] + u0[0:N-2, :]) / delta_theta**2
 
-        for k in range(1, K - 1):
-            for n in range(N):
-                d2_dphi2[n, k] = 1 / delta_phi**2 * (u0[n, k + 1] - 2 * u0[n, k] + u0[n, k - 1])
+        d2_dphi2[:, 1:K-1] = (u0[:, 2:K] - 2 * u0[:, 1:K-1] + u0[:, 0:K-2]) / delta_phi**2
 
         # Higher-order derivatives
-        for k in range(K):
-            for n in range(2, N - 2):
-                d3_dtheta3[n, k] = 3 / (8 * delta_theta**3) * (u0[n + 2, k] - u0[n - 2, k] - 2 * (u0[n + 1, k] - u0[n - 1, k]))
-                d4_dtheta4[n, k] = 1 / delta_theta**4 * (u0[n + 2, k] + u0[n - 2, k] - 4 * u0[n + 1, k] - 4 * u0[n - 1, k] + 6 * u0[n, k])
+        d3_dtheta3[2:N-2, :] = (3 / (8 * delta_theta**3)) * (
+            u0[4:N, :] - u0[0:N-4, :] - 2 * (u0[3:N-1, :] - u0[1:N-3, :])
+        )
+        d4_dtheta4[2:N-2, :] = (1 / delta_theta**4) * (
+            u0[4:N, :] + u0[0:N-4, :] - 4 * u0[3:N-1, :] - 4 * u0[1:N-3, :] + 6 * u0[2:N-2, :]
+        )
+                
+        d4_dphi4[:, 2:K-2] = (1 / delta_phi**4) * (
+            u0[:, 4:K] + u0[:, 0:K-4] - 4 * u0[:, 3:K-1] - 4 * u0[:, 1:K-3] + 6 * u0[:, 2:K-2]
+        )
 
-        for k in range(2, K - 2):
-            for n in range(N):
-                d4_dphi4[n, k] = 1 / delta_phi**4 * (
-                    u0[n, k + 2] + u0[n, k - 2] - 4 * u0[n, k + 1] - 4 * u0[n, k - 1] + 6 * u0[n, k])
-        for k in range(1, K-1):
-            for n in range(1,N-1):
-                d3_dphi_dtheta2[n, k] = 1/(2*delta_phi*delta_theta**2)*(u0[n+1, k+1]-2*u0[n,k+1] + u0[n-1,k+1]+ u0[n+1,k-1]+2*u0[n,k-1] - u0[n-1,k-1])
-                d3_dtheta_dphi2[n, k] = 1/(2*delta_theta*delta_phi**2)*(u0[n+1, k+1]-2*u0[n+1,k] + u0[n+1,k-1]- u0[n-1,k+1]+2*u0[n-1,k] - u0[n-1,k-1])
-                d4_dtheta2_dphi2[n, k] = 1/delta_theta**2*(d2_dphi2[n+1,k] - 2 * d2_dphi2[n,k] + d2_dphi2[n-1,k])
-        
+        d3_dphi_dtheta2[1:N-1, 1:K-1] = (1 / (2 * delta_phi * delta_theta**2)) * (
+            u0[2:N, 2:K] - 2 * u0[1:N-1, 2:K] + u0[0:N-2, 2:K] +
+            u0[2:N, 1:K-1] + 2 * u0[1:N-1, 1:K-1] - u0[0:N-2, 1:K-1]
+        )
+
+        d3_dtheta_dphi2[1:N-1, 1:K-1] = (1 / (2 * delta_theta * delta_phi**2)) * (
+            u0[2:N, 2:K] - 2 * u0[2:N, 1:K-1] + u0[2:N, 0:K-2] -
+            u0[0:N-2, 2:K] + 2 * u0[0:N-2, 1:K-1] - u0[0:N-2, 0:K-2]
+        )
+
+        d4_dtheta2_dphi2[1:N-1, 1:K-1] = (1 / delta_theta**2) * (
+            d2_dphi2[2:N, 1:K-1] - 2 * d2_dphi2[1:N-1, 1:K-1] + d2_dphi2[0:N-2, 1:K-1]
+        )
+
         # Compute double Laplacian
-        for k in range(K):
-            for n in range(N):
-                nabla4[n, k] = (d4_dtheta4[n, k]
-                    + 2 * (1 / np.tan(theta[n])) * d3_dtheta3[n, k]
-                    + ((np.cos(theta[n])**2 - 2) / (np.sin(theta[n])**2)) * d2_dtheta2[n, k]
-                    + (np.cos(theta[n]) / (np.sin(theta[n])**2)) * d_dtheta[n, k]
-                    + (1 / (np.sin(theta[n])**4)) * d4_dphi4[n, k]
-                    + 2 * ((np.cos(theta[n])**2 + 1) / (np.sin(theta[n])**4)) * d2_dphi2[n, k]
-                    + 2*d4_dtheta2_dphi2[n, k] - 2*(1 / np.tan(theta[n]))*d3_dphi_dtheta2[n, k]
-                )
+
+        tan_theta = np.tan(theta)
+        sin_theta = np.sin(theta)
+        cos_theta = np.cos(theta)
+
+        nabla4 = (
+            d4_dtheta4 + 
+            2 * (1 / tan_theta[:, None]) * d3_dtheta3 + 
+            ((cos_theta**2 - 2) / (sin_theta**2))[:, None] * d2_dtheta2 + 
+            (cos_theta / (sin_theta**2))[:, None] * d_dtheta + 
+            (1 / (sin_theta**4))[:, None] * d4_dphi4 + 
+            2 * ((cos_theta**2 + 1) / (sin_theta**4))[:, None] * d2_dphi2 + 
+            2 * d4_dtheta2_dphi2 - 
+            2 * (1 / tan_theta[:, None]) * d3_dphi_dtheta2
+        )
+        
+
         alpha = rho * h / delta_t**2 + sigma / (2 * delta_t)
         gamma = 2 * rho * h / delta_t**2
         zeta = -rho * h / delta_t**2 + sigma / (2 * delta_t)
 
         # Update elongations
-        for k in range(K):
-            for n in range(N):
-                # Point fixe en haut, il reste à 0
-                if n == 0:
-                    None 
-                # Calcul pour tous les autres points sauf en pi/2
-                elif n < N - 1:
-                    u_[n, k, t+1] = (1 / alpha) * (-D / R**4 * nabla4[n, k] + gamma * u_[n, k,t] + zeta * u_[n, k, t-1])
-                # Condition de liberté en pi/2
-                else:
-                    u_[n, k, t + 1] = u_[n-1, k,t + 1]
-                
+
+        # Point fixe en haut, il reste à 0
+        # Calcul pour tous les autres points sauf en pi/2
+        u_[1:, :, t+1] = (1 / alpha) * (-D / R**4 * nabla4[1:, :] + gamma * u_[1:, :,t] + zeta * u_[1:, :, t-1])
+        # Condition de liberté en pi/2
+        u_[N-1, :, t + 1] = u_[N-2, :,t + 1]
+
+    print()
     return u_, y_moy, Fs
 
 # Pour l'affichage on crée une matrice

@@ -11,13 +11,12 @@ import math
 def perturbation_initiale(x, L, position_pincement, hauteur_max):
     # position_pincement : Position relative où la corde est pincée (par exemple, 0.25 pour un quart de la longueur)
     # hauteur_max : Hauteur maximale du pincement
-    perturbation = np.zeros_like(x)
-    mid_point = int(position_pincement * len(x))  # Convertir en index
+    perturbation = np.zeros_like(x)  # Convertir en index
     for i in range(len(x)):
-        if i <= mid_point:  # Pente ascendante
-            perturbation[i] = hauteur_max * (i / mid_point)
+        if i <= position_pincement:  # Pente ascendante
+            perturbation[i] = hauteur_max * (i / position_pincement)
         else:  # Pente descendante
-            perturbation[i] = hauteur_max * ((len(x) - i) / (len(x) - mid_point))
+            perturbation[i] = hauteur_max * ((len(x) - i) / (len(x) - position_pincement))
     return perturbation
 
 
@@ -71,9 +70,7 @@ def FEMgui(L, rho, T,c, n_elements, dx, n_nodes, position_pincement, hauteur_max
     return simulation, pression_in_time 
 
 
-position = 1
 # Initialiser la perturbation
-position_pincement = 0.25  # La corde est pincée à un quart de sa longueur
 # Initialiser la perturbation avec une hauteur maximale de 0.01 m
 hauteur_max = 0.0003  # Par exemple, 1 cm
 #%% Initialisation
@@ -81,15 +78,17 @@ r = 1 #distance to where we are listening
 p0 = 1.225 #ρ0​ : densité de l'air (∼1.225 kg/m3∼1.225kg/m3).
 c0 = 343 #c0​ : vitesse du son dans l'air (∼343 m/s∼343m/s).
 # Paramètres de la corde
-L = 0.65               # Longueur de la corde (m)
-rho = 0.000582         # Densité linéique de masse (kg/m)
-T = 60                 # Tension de la corde (N)
+L = 0.655              # Longueur de la corde (m)
+
+position_pincement = 21  # La corde est pincée à un quart de sa longueur
+rho = 1150*(0.00069/2)**2* np.pi       # Densité linéique de masse (kg/m)
+T = 42.86                 # Tension de la corde (N)
 c = (T / rho) ** 0.5   # Célérité de l'onde
 print("Célérité de l'onde : c =", c)
 # Condition CFL pour le pas de temps
 t_end = 1         # Temps de simulation (s)
-dt = 1*10**(-5)
-n_elements = 80       # Nombre d'éléments finis
+dt = 0.0000151
+n_elements = 79    # Nombre d'éléments finis
 dx = L / n_elements    # Longueur d'un élément
 n_nodes = n_elements + 1
 n_steps = int(t_end//dt)        # Nombre de pas temporels
@@ -100,6 +99,25 @@ end_time = time.time()
 
 elapsed_time = end_time - start_time
 print(f"Simulation took {elapsed_time} seconds.")
+
+# Enregistrer les données
+sample_rate = int(1 / dt)
+audio_data = np.int16((pression / np.max(np.abs(pression))) * 32767)
+print(sample_rate)
+file_name = f"el_finisimulation_L{L}_p0{p0}_c0{c0}_celerity{c}.wav"
+with wave.open(file_name, 'w') as wf:
+    wf.setnchannels(1)
+    wf.setsampwidth(2)
+    wf.setframerate(sample_rate)
+    wf.writeframes(audio_data.tobytes())
+
+# Affichage des résultats
+plt.figure(1)
+plt.plot(pression)
+plt.ylabel('Pression (Pa)')
+plt.xlabel('Temps (s)')
+plt.title('Pression dans le temps à 1 m')
+plt.show()
 
 
 # Définir l'axe des positions (pour la simulation spatiale)
@@ -114,23 +132,4 @@ plt.ylabel('Hauteur (m)')
 plt.xlabel('Position (m)')
 plt.title('Hauteur de la corde en fonction de x pour différents temps')
 plt.legend()
-plt.show()
-
-# Enregistrer les données
-sample_rate = int(1 / dt)
-audio_data = np.int16((pression / np.max(np.abs(pression))) * 32767)
-print(sample_rate)
-file_name = f"dif_finisimulation_r{r}_p0{p0}_c0{c0}_celerity{c}.wav"
-with wave.open(file_name, 'w') as wf:
-    wf.setnchannels(1)
-    wf.setsampwidth(2)
-    wf.setframerate(sample_rate)
-    wf.writeframes(audio_data.tobytes())
-
-# Affichage des résultats
-plt.figure(1)
-plt.plot(pression)
-plt.ylabel('Pression (Pa)')
-plt.xlabel('Temps (s)')
-plt.title('Pression dans le temps à 1 m')
 plt.show()
