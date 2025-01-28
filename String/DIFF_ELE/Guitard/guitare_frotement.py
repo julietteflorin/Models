@@ -61,14 +61,14 @@ def calculate_string_vibration(N, n0, y0, K, Tau, L, T, sigma, mu, delta_x, delt
 N = 80
 n0 = 22
 y0 = 0.0003
-diff_t = 1*10**(-5)
-Tau = 7
+diff_t = 0.000009652509653
+Tau = 3
 K = int(Tau//diff_t)
 
 L = 0.655
-T = 42.86 # kg into Newton
-sigma = 0
-mu = 1150*(0.00069/2)**2* np.pi #0.000582
+T = 45.02 # Newton
+sigma = 0.0013
+mu = 1150*(0.00084/2)**2* np.pi #0.000582
 print(mu)
 delta_x = L / N
 #%% Simulation
@@ -80,7 +80,7 @@ print(f"Simulation took {elapsed_time} seconds.")
 
 #%% Save the data
 file_name = (
-    f"comparing_simulation_N{N}_n0{n0}_y0{y0}_Tau{Tau}_L{L}_T{T}_sigma{sigma}_mu{mu}.wav"
+    f"Simulation_real_guitard_N{N}_n0{n0}_y0{y0}_Tau{Tau}_L{L}_T{T}_sigma{sigma}_mu{mu}.wav"
 )
 file_name = file_name.replace(" ", "_")
 
