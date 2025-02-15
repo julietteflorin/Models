@@ -62,12 +62,12 @@ N = 80
 n0 = 22
 y0 = 0.0003
 diff_t = 0.000009652509653
-Tau = 3
+Tau = 1
 K = int(Tau//diff_t)
 
 L = 0.655
 T = 45.02 # Newton
-sigma = 0.0013
+sigma = 0
 mu = 1150*(0.00084/2)**2* np.pi #0.000582
 print(mu)
 delta_x = L / N
